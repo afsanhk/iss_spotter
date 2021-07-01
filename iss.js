@@ -69,7 +69,6 @@ const fetchCoordsByIP = function(ip, callback) {
 
 // ***API CALL #3 --- USE LATITUDE AND LONGITUDE TO FIND OUT 5 UPCOMING TIMES ISS WILL FLY OVERHEAD***
 
-
 /**
  * Makes a single API request to retrieve upcoming ISS fly over times the for the given lat/lng coordinates.
  * Input:
@@ -97,4 +96,45 @@ const fetchISSFlyOverTimes = function(coords, callback) {
     callback(null, flyTimes);
   });
 };
-module.exports = { fetchMyIP, fetchCoordsByIP, fetchISSFlyOverTimes };
+
+// ***CHAIN THE 3 API CALLS***
+
+/**
+ * Orchestrates multiple API requests in order to determine the next 5 upcoming ISS fly overs for the user's current location.
+ * Input:
+ *   - A callback with an error or results.
+ * Returns (via Callback):
+ *   - An error, if any (nullable)
+ *   - The fly-over times as an array (null if error):
+ *     [ { risetime: <number>, duration: <number> }, ... ]
+ */
+const nextISSTimesForMyLocation = function(callback) {
+  fetchMyIP((error,ip) => {
+    if (error) {
+      console.log(`It didn't work! :${error}`);
+    } else {
+      fetchCoordsByIP(ip, (error,coords) => {
+        if (error) {
+          console.log(`It didn't work! :${error}`);
+        } else {
+          fetchISSFlyOverTimes(coords, (error,passes) => {
+            if (error) {
+              console.log(`It didn't work! :${error}`);
+            } else {
+              for (let pass of passes) {
+                let date = new Date(pass.risetime * 1000);
+                let duration = pass.duration;
+                console.log(`Next pass at ${date} for ${duration} seconds!`);
+              }
+            }
+          });
+        }
+      });
+    }
+  });
+};
+
+
+
+
+module.exports = {nextISSTimesForMyLocation};
